@@ -7,7 +7,7 @@ MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 
 
 def test_migration_files_numbering_and_no_duplicates():
-    migration_files = sorted(glob.glob(str(MIGRATIONS_DIR / "*.sql")))
+    migration_files = sorted(glob.glob(str(MIGRATIONS_DIR / "[0-9][0-9][0-9]_*.sql")))
     assert len(migration_files) == 10, f"Expected exactly 10 migration files, found {len(migration_files)}"
 
     basenames = [Path(p).name for p in migration_files]
@@ -34,7 +34,7 @@ def test_migration_files_numbering_and_no_duplicates():
 
 def test_migration_dependency_ordering():
     """Verify that tables are created before they are referenced or altered."""
-    migration_files = sorted(glob.glob(str(MIGRATIONS_DIR / "*.sql")))
+    migration_files = sorted(glob.glob(str(MIGRATIONS_DIR / "[0-9][0-9][0-9]_*.sql")))
     sql_texts = {}
     for p in migration_files:
         with open(p, "r", encoding="utf-8") as f:

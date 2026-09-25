@@ -1,6 +1,5 @@
-// Centralized API client for Urimai AI with retry logic, auth token injection, and Tamil error translation
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const rawBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = rawBase.trim().replace(/\/+$/, "");
 
 export interface Family {
   id: string;
@@ -188,7 +187,7 @@ function translateToTamilError(status: number, rawDetail?: string, messageTa?: s
 export async function fetchFromApi<T>(
   path: string,
   options?: RequestInit,
-  retries: number = 2
+  retries: number = 3
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
 
@@ -233,9 +232,16 @@ export async function fetchFromApi<T>(
           // fallback
         }
 
-        // On 4xx client errors, do not retry
-        if (res.status >= 400 && res.status < 500) {
+        // On 4xx client errors (e.g. 400, 401, 403, 404, 422), do not retry
+        if (res.status >= 400 && res.status < 500 && res.status !== 408) {
           throw new Error(translateToTamilError(res.status, errorDetail, messageTa));
+        }
+
+        // If server error (502, 503, 504), let it retry
+        if (attempt < retries && (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 500)) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
         }
 
         throw new Error(translateToTamilError(res.status, errorDetail, messageTa));
@@ -244,9 +250,9 @@ export async function fetchFromApi<T>(
       return await res.json();
     } catch (err: any) {
       lastError = err;
-      // If network failure and retries remaining, wait with backoff
+      // If network failure (e.g. Render server waking up / cold start) and retries remaining, wait with backoff
       if (attempt < retries) {
-        const delay = Math.pow(2, attempt) * 400; // 400ms, 800ms...
+        const delay = Math.pow(2, attempt) * 1200; // 1.2s, 2.4s, 4.8s
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -255,7 +261,7 @@ export async function fetchFromApi<T>(
   throw (
     lastError ||
     new Error(
-      "இணைய இணைப்பு துண்டிக்கப்பட்டுள்ளது அல்லது சேவை தற்காலிகமாக கிடைக்கவில்லை. மீண்டும் முயற்சிக்கவும்."
+      "இணைப்பு பிழை: சர்வர் தயாராகிறது அல்லது இணைய இணைப்பு துண்டிக்கப்பட்டுள்ளது. தயவுசெய்து சில நொடிகள் கழித்து மீண்டும் முயற்சிக்கவும்."
     )
   );
 }

@@ -43,14 +43,15 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting Urimai AI backend in [{settings.ENVIRONMENT.upper()}] environment...")
 
     # Ensure tables are created when running in development/local
-    Base.metadata.create_all(bind=engine)
-
-    # Seed knowledge base if not present
-    db = SessionLocal()
     try:
-        seed_database(db)
-    finally:
-        db.close()
+        Base.metadata.create_all(bind=engine)
+        db = SessionLocal()
+        try:
+            seed_database(db)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.warning(f"Database initialization at startup skipped/handled: {e}")
 
     yield
 
@@ -77,13 +78,27 @@ app.add_exception_handler(Exception, generic_exception_handler)
 
 # ── Configure CORS ─────────────────────────────────────────────────────────────
 allowed_origins_list = [orig.strip() for orig in settings.ALLOWED_ORIGINS.split(",") if orig.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins_list if allowed_origins_list else ["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
+# Handle wildcard origin or specific origins with regex fallback for vercel & localhost
+if "*" in allowed_origins_list:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?://.*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins_list if allowed_origins_list else ["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://.*\.vercel\.app$|^https://.*\.onrender\.com$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
 
 
 # ── Request Tracing & Structured Access Logging Middleware ─────────────────────
