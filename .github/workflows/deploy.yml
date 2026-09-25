@@ -1,0 +1,21 @@
+name: Urimai AI — Continuous Deployment (CD)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-status:
+    name: Production Deployment Hook Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Instructions
+        run: |
+          echo "🚀 Continuous Deployment is wired via Webhooks & Git Integrations:"
+          echo "  - Frontend: Vercel GitHub Integration (watches root /frontend directory)"
+          echo "  - Backend:  Railway / Render GitHub Integration (watches root /backend directory)"
+          echo "  - Database: Supabase PostgreSQL (Managed Migrations via scripts/migrate_production.py)"

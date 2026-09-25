@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --color-tn-emerald: #0D5C3A;
+  --color-tn-emerald-dark: #083B25;
+  --color-tn-emerald-light: #E6F4EA;
+  --color-sandstone: #FBF9F5;
+  --color-card-surface: #FFFFFF;
+  --color-charcoal: #1A202C;
+  --color-charcoal-muted: #4A5568;
+  --color-amber-alert: #C05621;
+  --color-amber-light: #FEF3C7;
+  --color-sky-action: #1E40AF;
+  --color-sky-light: #EFF6FF;
+  --color-border-subtle: #E2E8F0;
+}
+
+body {
+  background-color: var(--color-sandstone);
+  color: var(--color-charcoal);
+  font-family: var(--font-noto-tamil), system-ui, -apple-system, sans-serif;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible minimum tap targets for touch devices */
+.tap-target {
+  min-height: 52px;
+  min-width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card styles */
+.gov-card {
+  background-color: #ffffff;
+  border: 1.5px solid var(--color-border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* High contrast focus ring for keyboard/accessibility */
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid #0D5C3A;
+  outline-offset: 2px;
+}
+
+/* Print styles for citizen entitlement slips */
+@media print {
+  body {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
